@@ -2,7 +2,13 @@ import express = require("express");
 import cors = require("cors");
 import mongoose from "mongoose";
 import path from "path";
+import dns = require("dns");
 import { userRoutes } from "./routes/UserRoutes";
+
+// Ensure SRV lookups work reliably on Windows networks for MongoDB Atlas
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
