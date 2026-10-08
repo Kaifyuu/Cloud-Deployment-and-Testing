@@ -1,0 +1,47 @@
+# CI Pipeline - Build Verification
+# 955108 Software Deployment - Part 2 Lab (Multi-workflow)
+# Runs after CI - Unit Tests completes successfully
+
+name: CI - Build Verification
+
+on:
+  workflow_run:
+    workflows: ["CI - Unit Tests"]
+    types: [completed]
+
+jobs:
+  verify-build:
+    name: Verify Build
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Verify build output exists
+        run: |
+          if [ -f "dist/index.js" ]; then
+            echo "✅ Build output verified: dist/index.js exists"
+          else
+            echo "❌ Build failed: dist/index.js not found"
+            exit 1
+          fi
+
+      - name: Verify all compiled files
+        run: |
+          echo "📦 Compiled files:"
+          find dist -name '*.js' -type f
+          echo "✅ Build verification complete"

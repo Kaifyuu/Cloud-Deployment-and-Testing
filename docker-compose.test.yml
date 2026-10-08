@@ -1,0 +1,20 @@
+# Docker Compose for Testing - 955108 Software Deployment
+# Software Testing Lab 11: CI/CD Pipeline
+# Spins up the app for automated testing in CI
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: 955108-test-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=test
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
