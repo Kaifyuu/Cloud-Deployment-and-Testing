@@ -1,37 +1,61 @@
-// Test1.ts - Unit test runner for CI pipeline
-// Exit code 0 = PASS, 1 = FAIL
-// Used in GitHub Actions workflow to validate Utils functions
+import { Utils } from "./Utils";
 
-import { add, subtract, multiply, divide } from "./Utils";
-
-let passed = 0;
-let failed = 0;
-
-function assert(testName: string, actual: number, expected: number): void {
-  if (actual === expected) {
-    console.log(`✅ PASS: ${testName} (expected ${expected}, got ${actual})`);
-    passed++;
-  } else {
-    console.log(`❌ FAIL: ${testName} (expected ${expected}, got ${actual})`);
-    failed++;
+// Unit test: many cases in one file, stop at the first failing case
+const unit_test = async () => {
+  // test1
+  if (Utils.add(1, 2) !== 3) {
+    console.log("Error: add(1,2) should be 3");
+    process.exit(1); // exit code != 0 makes the GitHub Actions step fail
   }
-}
 
-// Test cases
-assert("add(1, 2) should be 3", add(1, 2), 3);
-assert("add(-1, 1) should be 0", add(-1, 1), 0);
-assert("add(0, 0) should be 0", add(0, 0), 0);
-assert("subtract(5, 3) should be 2", subtract(5, 3), 2);
-assert("multiply(3, 4) should be 12", multiply(3, 4), 12);
-assert("divide(10, 2) should be 5", divide(10, 2), 5);
+  // test2
+  if (Utils.add(-1, 1) !== 0) {
+    console.log("Error: add(-1,1) should be 0");
+    process.exit(1);
+  }
 
-console.log(`\n--- Results: ${passed} passed, ${failed} failed ---`);
+  // test3
+  if (Utils.helloworld() !== "hello world") {
+    console.log('Error: helloworld() should be "hello world"');
+    process.exit(1);
+  }
 
-// Output exit code for CI pipeline
-if (failed > 0) {
-  console.log("1");
-  process.exit(1);
-} else {
-  console.log("0");
-  process.exit(0);
-}
+  // email and age: each case is [input, expected result]
+  const emailCases: [string, boolean][] = [
+    ["a@camt.info", true],
+    ["john.doe+tag@example.co.th", true],
+    ["", false],
+    ["no-at-sign.com", false],
+    ["missing@domain", false],
+    ["@camt.info", false],
+    ["two@@camt.info", false],
+    ["has space@camt.info", false],
+  ];
+  for (const [input, expected] of emailCases) {
+    if (Utils.isValidEmail(input) !== expected) {
+      console.log(`Error: isValidEmail("${input}") should be ${expected}`);
+      process.exit(1);
+    }
+  }
+
+  const ageCases: [number, boolean][] = [
+    [7, true],
+    [1, true],
+    [120, true],
+    [0, false],
+    [-5, false],
+    [121, false],
+    [7.5, false],
+    [NaN, false],
+  ];
+  for (const [input, expected] of ageCases) {
+    if (Utils.isValidAge(input) !== expected) {
+      console.log(`Error: isValidAge(${input}) should be ${expected}`);
+      process.exit(1);
+    }
+  }
+
+  console.log("Test1 passed");
+};
+
+unit_test();

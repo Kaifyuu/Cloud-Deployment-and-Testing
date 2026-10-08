@@ -1,71 +1,74 @@
-import express = require("express");
-import cors = require("cors");
-import mongoose from "mongoose";
-import path from "path";
-import dns = require("dns");
-import { userRoutes } from "./routes/UserRoutes";
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import userRouter from './UserRoutes';
+import dns from 'node:dns';
+import { loadEnvFile } from 'node:process';
+import { Utils } from './Utils';
 
-// Ensure SRV lookups work reliably on Windows networks for MongoDB Atlas
-try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
-} catch {}
+const envPath = path.join(__dirname, '../.env');
+if (existsSync(envPath)) {
+  loadEnvFile(envPath);
+}
+dns.setServers(['1.1.1.1', '8.8.8.8']);
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(express.json());
+export const app = express();
 app.use(cors());
+app.use(express.json());
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, "public")));
-
-// Routes
-app.get("/", (req, res) => {
-  res.send("Hello, world! - 955108 Software Deployment");
+app.get('/', (_req, res) => {
+  res.send('Hello, World!');
 });
 
-app.use("/api/users", userRoutes);
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get('/hello', (_req, res) => {
+  res.send(Utils.helloworld());
 });
 
-// MongoDB connection (optional - checks env var or config.json)
-let mongoURI: string | undefined = process.env.MONGO_URI;
+app.get('/add', (req, res) => {
+  const a = Number(req.query.a);
+  const b = Number(req.query.b);
+  if (isNaN(a) || isNaN(b)) {
+    return res.status(400).send('Invalid numbers');
+  }
+  res.json({ result: Utils.add(a, b) });
+});
 
-if (!mongoURI) {
-  const fs = require("fs");
-  const candidates = [
-    path.join(__dirname, "config.json"),
-    path.join(__dirname, "../src/config.json"),
-    path.join(process.cwd(), "src", "config.json"),
-    path.join(process.cwd(), "config.json"),
-  ];
+app.use(express.static(path.join(__dirname, '../public')));
 
-  for (const file of candidates) {
-    if (fs.existsSync(file)) {
-      try {
-        const config = JSON.parse(fs.readFileSync(file, "utf8"));
-        mongoURI = config.mongoURI;
-        break;
-      } catch {}
-    }
+app.use('/api', userRouter);
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+  });
+});
+
+if (require.main === module) {
+  const mongoUri = process.env.MONGODB_URI;
+  if (mongoUri) {
+    mongoose
+      .connect(mongoUri)
+      .then(() => {
+        console.log('Connected to MongoDB');
+        const port = Number(process.env.PORT) || 3000;
+        app.listen(port, () => {
+          console.log(`Server is running on http://localhost:${port}`);
+        });
+      })
+      .catch((error) => {
+        console.error('Error connecting to MongoDB:', error);
+        const port = Number(process.env.PORT) || 3000;
+        app.listen(port, () => {
+          console.log(`Server is running on http://localhost:${port} (without DB)`);
+        });
+      });
+  } else {
+    const port = Number(process.env.PORT) || 3000;
+    app.listen(port, () => {
+      console.log(`Server is running on http://localhost:${port}`);
+    });
   }
 }
-
-if (mongoURI) {
-  mongoose
-    .connect(mongoURI)
-    .then(() => console.log("Connected to MongoDB Atlas"))
-    .catch((err: Error) => console.log("MongoDB connection error:", err.message));
-} else {
-  console.log("No MongoDB config found - running without database");
-}
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-export default app;

@@ -1,0 +1,41 @@
+name: Integration Test
+
+# Runs only AFTER Workflow 1 (build + unit test) has finished successfully
+on:
+  workflow_run:
+    workflows: ["Workflow 1"]
+    types:
+      - completed
+
+jobs:
+  integration-green:
+    # Expected: GREEN (all checks pass)
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - name: Integration test (green)
+        run: npm run test:integration
+
+  integration-red:
+    # Expected: RED (intentionally fails to demonstrate a failing test)
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - name: Integration test (red)
+        run: npm run test:integration:fail

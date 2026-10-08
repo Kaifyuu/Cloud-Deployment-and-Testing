@@ -1,19 +1,18 @@
-// Utils.ts - Utility module with testable functions
-// Used in Part 2 Lab: GitHub Actions automated unit testing
-
-export function add(a: number, b: number): number {
-  return a + b;
+function helloworld(): string {
+  return "hello world";
 }
 
-export function subtract(a: number, b: number): number {
-  return a - b;
+function add(a: number, b: number): number {
+  return a + b; // เปลี่ยนเป็น a - b เพื่อทดสอบให้ test fail
 }
 
-export function multiply(a: number, b: number): number {
-  return a * b;
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export function divide(a: number, b: number): number {
-  if (b === 0) throw new Error("Cannot divide by zero");
-  return a / b;
+// age must be an integer between 1 and 120
+function isValidAge(age: number): boolean {
+  return Number.isInteger(age) && age >= 1 && age <= 120;
 }
+
+export const Utils = { helloworld, add, isValidEmail, isValidAge };

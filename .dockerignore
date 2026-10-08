@@ -23,19 +23,16 @@ yarn-error.log*
 # Ignore macOS system files
 .DS_Store
 
-# Ignore Docker files
+# Ignore Dockerfile and docker-compose files (optional)
+Dockerfile
+docker-compose.yml
+
+npm-debug.log
 Dockerfile*
 docker-compose*
 .dockerignore
-
-# Ignore git
 .git
 .gitignore
+.vscode
 
-# Ignore source TypeScript (only dist is needed)
-src/
-tsconfig.json
-nodemon.json
 
-# Ignore test files
-robot-tests/
