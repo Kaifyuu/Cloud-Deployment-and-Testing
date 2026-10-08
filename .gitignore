@@ -8,6 +8,7 @@ npm-debug.log*
 .env.test.local
 .env.production.local
 .DS_Store
+config.json
 src/config.json
 robot-tests/results/
 robot-tests/venv/

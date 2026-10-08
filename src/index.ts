@@ -26,15 +26,36 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// MongoDB connection (optional - only if config exists)
-try {
-  const config = require("./config.json");
+// MongoDB connection (optional - checks env var or config.json)
+let mongoURI: string | undefined = process.env.MONGO_URI;
+
+if (!mongoURI) {
+  const fs = require("fs");
+  const candidates = [
+    path.join(__dirname, "config.json"),
+    path.join(__dirname, "../src/config.json"),
+    path.join(process.cwd(), "src", "config.json"),
+    path.join(process.cwd(), "config.json"),
+  ];
+
+  for (const file of candidates) {
+    if (fs.existsSync(file)) {
+      try {
+        const config = JSON.parse(fs.readFileSync(file, "utf8"));
+        mongoURI = config.mongoURI;
+        break;
+      } catch {}
+    }
+  }
+}
+
+if (mongoURI) {
   mongoose
-    .connect(config.mongoURI)
+    .connect(mongoURI)
     .then(() => console.log("Connected to MongoDB Atlas"))
-    .catch((err: Error) => console.log("MongoDB connection optional:", err.message));
-} catch {
-  console.log("No config.json found - running without MongoDB");
+    .catch((err: Error) => console.log("MongoDB connection error:", err.message));
+} else {
+  console.log("No MongoDB config found - running without database");
 }
 
 app.listen(PORT, () => {
