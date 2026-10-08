@@ -1,0 +1,23 @@
+name: Integration Test - Green (Pass)
+
+on:
+  workflow_run:
+    workflows: ["Workflow 1"]
+    types:
+      - completed
+
+jobs:
+  integration-green:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run build
+      - name: Run Integration test (green)
+        run: npm run test:integration
